@@ -1,183 +1,322 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brawl Simulator Ultra</title>
+    <title>Tower Defense Clone</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
-
-        :root {
-            --gold: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-            --mythic: linear-gradient(180deg, #FF0066 0%, #800033 100%);
-            --rare: linear-gradient(180deg, #00FF00 0%, #006400 100%);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
 
         body {
-            margin: 0; padding: 0;
-            background: radial-gradient(circle, #2c3e50 0%, #000000 100%);
-            font-family: 'Lilita One', cursive;
-            height: 100vh; overflow: hidden;
-            display: flex; flex-direction: column;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        /* HEADER ESTILO SUPERCELL */
-        .header {
-            display: flex; justify-content: flex-end;
-            padding: 15px; gap: 15px;
-            background: rgba(0,0,0,0.3);
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            background-color: #f2d398;
+            border: 5px solid #8b5a2b;
         }
 
-        .res-item {
-            background: #1a1a1a;
-            border: 3px solid #333;
-            border-radius: 50px;
-            padding: 5px 20px;
-            display: flex; align-items: center;
-            gap: 10px; min-width: 100px;
-            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.5);
+        /* Barra de status superior */
+        #status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            background-color: #5a3e2b;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 20px;
         }
 
-        /* MENU LATERAL SLIM */
-        .sidebar {
-            position: absolute; left: 0; top: 20%;
-            display: flex; flex-direction: column; gap: 10px;
+        .resource {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .side-btn {
-            width: 70px; height: 60px;
-            background: #2980b9; border: 4px solid #fff;
-            border-radius: 0 15px 15px 0;
-            cursor: pointer; transition: 0.2s;
+        .bar {
+            height: 15px;
+            border: 1px solid #ccc;
+            margin-left: 5px;
+            border-radius: 3px;
+            overflow: hidden;
         }
 
-        .side-btn:hover { transform: translateX(10px); }
-
-        /* PALCO PRINCIPAL */
-        .stage {
-            flex: 1; display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            perspective: 1000px;
+        #hp-bar-fill {
+            width: 95%; /* Valor exemplo */
+            height: 100%;
+            background-color: #ff4444;
         }
 
-        .brawler-hero {
-            width: 350px;
-            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.8));
-            animation: float 4s infinite ease-in-out;
+        #mp-bar-fill {
+            width: 20%; /* Valor exemplo */
+            height: 100%;
+            background-color: #4444ff;
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(2deg); }
-            50% { transform: translateY(-30px) rotate(-2deg); }
-        }
-
-        /* BOTÃO MEGA CAIXA */
-        .mega-box-btn {
-            margin-bottom: 50px;
-            background: #3498db;
-            border: 6px solid #fff;
-            padding: 20px 60px;
-            border-radius: 25px;
-            color: #fff; font-size: 32px;
-            text-transform: uppercase;
+        /* Botão Town */
+        #btn-town {
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            padding: 8px 15px;
+            background-color: #8b5a2b;
+            color: white;
+            border: 2px solid #d2b48c;
             cursor: pointer;
-            box-shadow: 0 10px 0 #2980b9, 0 20px 40px rgba(0,0,0,0.4);
-            transition: 0.1s;
         }
 
-        .mega-box-btn:active {
-            transform: translateY(10px);
-            box-shadow: none;
+        /* Torre e mapa */
+        #map-area {
+            position: absolute;
+            top: 40px;
+            left: 120px;
+            width: 400px;
+            height: 350px;
+            background: linear-gradient(to bottom, #f2d398 0%, #8bc34a 100%);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            padding: 5px;
         }
 
-        /* OVERLAY DE RECOMPENSA ULTRA */
-        #reward-screen {
-            display: none; position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 999; justify-content: center; align-items: center;
+        .map-tile {
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255,255,255,0.2);
+            border: 1px solid #8b5a2b;
         }
 
-        .reward-card {
-            background: #fff;
-            padding: 10px; border-radius: 30px;
-            width: 300px; text-align: center;
-            animation: rewardPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 12px solid #fff;
+        .tower {
+            position: absolute;
+            top: 60px;
+            left: 220px;
+            width: 120px;
+            height: 280px;
+            background-image: url('https://via.placeholder.com/120x280.png?text=TORRE');
+            background-size: cover;
         }
 
-        @keyframes rewardPop {
-            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        .statue {
+            position: absolute;
+            top: 80px;
+            left: 400px;
+            width: 80px;
+            height: 120px;
+            background-image: url('https://via.placeholder.com/80x120.png?text=ESTATUA');
+            background-size: cover;
         }
 
-        .rarity-banner {
-            width: 110%; margin-left: -5%;
-            padding: 10px 0; font-size: 28px;
-            color: #fff; text-shadow: 2px 2px #000;
-            clip-path: polygon(0 20%, 100% 0, 100% 80%, 0 100%);
-            margin-top: -40px;
+        /* Painel de upgrades */
+        #upgrade-panel {
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            width: 220px;
+            background-color: #5a3e2b;
+            border: 2px solid #d2b48c;
+            padding: 10px;
+            color: white;
         }
 
-        .brawler-img { width: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.2)); }
+        .upgrade-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
 
-        .btn-collect {
-            background: #2ecc71; color: white;
-            border: none; padding: 15px 40px;
-            border-radius: 15px; margin-top: 20px;
-            font-family: 'Lilita One'; font-size: 20px;
-            cursor: pointer; box-shadow: 0 5px 0 #27ae60;
+        .upgrade-btn:hover {
+            background-color: #3367d6;
+        }
+
+        /* Itens e botões inferiores */
+        #items-grid {
+            position: absolute;
+            bottom: 40px;
+            right: 20px;
+            width: 220px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+
+        .item-slot {
+            width: 50px;
+            height: 50px;
+            background-color: #8b5a2b;
+            border: 1px solid #d2b48c;
+            background-image: url('https://via.placeholder.com/50x50.png?text=ITEM');
+            background-size: cover;
+        }
+
+        #bottom-buttons {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .game-btn {
+            width: 50px;
+            height: 50px;
+            background-color: #8b5a2b;
+            border: 2px solid #d2b48c;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 10px;
+        }
+
+        .game-btn i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        #action-buttons {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .action-btn {
+            width: 70px;
+            height: 60px;
+            background-color: #8b5a2b;
+            border: 2px solid #d2b48c;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 10px;
+        }
+
+        .action-btn i {
+            font-size: 25px;
+            margin-bottom: 2px;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <div id="game-container">
+        <!-- Barra de status -->
+        <div id="status-bar">
+            <div class="resource">
+                <i class="fas fa-coins"></i> 5,475,214
+            </div>
+            <div class="resource">
+                <i class="fas fa-gem"></i> 25
+            </div>
+            <div class="resource">
+                HP <div class="bar"><div id="hp-bar-fill"></div></div> 754,372 / 800,000
+            </div>
+            <div class="resource">
+                MP <div class="bar"><div id="mp-bar-fill"></div></div> 21,405 / 100,000
+            </div>
+            <div class="resource">
+                <i class="fas fa-shield-alt"></i> 4296
+            </div>
+        </div>
 
-    <div class="header">
-        <div class="res-item" style="color: #00FF00;">🟢 <span>2,450</span></div>
-        <div class="res-item" style="color: #FFD700;">🟡 <span id="coins">10,000</span></div>
-    </div>
+        <!-- Botão Town -->
+        <button id="btn-town">&lt;TOWN</button>
 
-    <div class="sidebar">
-        <div class="side-btn" style="background: #e67e22;"></div>
-        <div class="side-btn" style="background: #9b59b6;"></div>
-    </div>
+        <!-- Área do mapa e torre -->
+        <div id="map-area">
+            <!-- Tiles do mapa gerados via JS -->
+        </div>
+        <div class="tower"></div>
+        <div class="statue"></div>
 
-    <div class="stage">
-        <img class="brawler-hero" src="https://vignette.wikia.nocookie.net/brawlstars/images/e/e4/Leon_Portrait.png">
-        <button class="mega-box-btn" onclick="openBox()">ABRIR CAIXA</button>
-    </div>
+        <!-- Painel de upgrades -->
+        <div id="upgrade-panel">
+            <h3>UPGRADES</h3>
+            <button class="upgrade-btn">UPGRADE CASTLE<br><span>925,000 G</span></button>
+            <button class="upgrade-btn">UPGRADE ARCHER<br><span>600,000 G</span></button>
+        </div>
 
-    <div id="reward-screen">
-        <div class="reward-card" id="card-bg">
-            <div id="rarity-name" class="rarity-banner">LENDÁRIO</div>
-            <img id="reward-img" class="brawler-img" src="">
-            <h2 id="reward-name" style="color: #333; font-size: 35px; margin: 10px 0;">CROW</h2>
-            <button class="btn-collect" onclick="closeReward()">COLETAR</button>
+        <!-- Grid de itens -->
+        <div id="items-grid">
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+            <div class="item-slot"></div>
+        </div>
+
+        <!-- Botões inferiores esquerda -->
+        <div id="bottom-buttons">
+            <button class="game-btn"><i class="fas fa-cog"></i> SET</button>
+            <button class="game-btn"><i class="fas fa-trophy"></i> RANK</button>
+            <button class="game-btn"><i class="fas fa-save"></i> SAVE</button>
+            <button class="game-btn"><i class="fas fa-swords"></i> SKILL</button>
+            <button class="game-btn"><i class="fas fa-diamond"></i> SHOP</button>
+            <button class="game-btn"><i class="fas fa-calendar"></i> EVENT</button>
+        </div>
+
+        <!-- Botões de ação inferior direita -->
+        <div id="action-buttons">
+            <button class="action-btn"><i class="fas fa-skull-crossbones"></i> HELL</button>
+            <button class="action-btn"><i class="fas fa-shield-alt"></i> REPLAY</button>
+            <button class="action-btn"><i class="fas fa-swords"></i> BATTLE</button>
         </div>
     </div>
 
     <script>
-        const database = [
-            { n: "Spike", r: "LENDÁRIO", c: "var(--gold)", i: "https://vignette.wikia.nocookie.net/brawlstars/images/1/19/Spike_Portrait.png" },
-            { n: "Mortis", r: "MÍTICO", c: "var(--mythic)", i: "https://vignette.wikia.nocookie.net/brawlstars/images/0/0e/Mortis_Portrait.png" },
-            { n: "El Primo", r: "RARO", c: "var(--rare)", i: "https://vignette.wikia.nocookie.net/brawlstars/images/5/5a/El_Primo_Portrait.png" }
-        ];
-
-        function openBox() {
-            const item = database[Math.floor(Math.random() * database.length)];
-            
-            document.getElementById("reward-img").src = item.i;
-            document.getElementById("reward-name").innerText = item.n;
-            document.getElementById("rarity-name").innerText = item.r;
-            document.getElementById("rarity-name").style.background = item.c;
-            document.getElementById("card-bg").style.borderColor = item.r === "LENDÁRIO" ? "#FFD700" : "#fff";
-
-            document.getElementById("reward-screen").style.display = "flex";
+        // Gerar tiles do mapa
+        const mapArea = document.getElementById('map-area');
+        for (let i = 0; i < 30; i++) {
+            const tile = document.createElement('div');
+            tile.classList.add('map-tile');
+            mapArea.appendChild(tile);
         }
 
-        function closeReward() {
-            document.getElementById("reward-screen").style.display = "none";
-        }
+        // Função básica para upgrades (apenas feedback visual)
+        const upgradeBtns = document.querySelectorAll('.upgrade-btn');
+        upgradeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cost = btn.querySelector('span').textContent;
+                alert(`Tentando upgrade! Custo: ${cost}\n(Implemente a lógica de recursos aqui)`);
+            });
+        });
+
+        // Botão BATTLE (iniciar waves)
+        document.querySelector('.action-btn:last-child').addEventListener('click', () => {
+            alert('Iniciando waves de inimigos!\n(Implemente o sistema de waves aqui)');
+        });
     </script>
 </body>
     </html>
+                       
