@@ -2,62 +2,109 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Meu RPG Simples</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RPG Mundo Aberto</title>
     <style>
-        body { display: flex; flex-direction: column; align-items: center; background: #222; color: white; font-family: sans-serif; }
-        canvas { border: 4px solid #fff; background: #444; margin-bottom: 20px; }
-        .controles { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; }
-        button { width: 60px; height: 60px; font-weight: bold; cursor: pointer; }
+        body { margin: 0; background: #111; color: white; font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        canvas { border: 2px solid #555; background: #222; touch-action: none; }
+        .controles { display: grid; grid-template-columns: repeat(3, 70px); gap: 5px; margin-top: 10px; }
+        button { width: 70px; height: 70px; font-size: 24px; background: #444; color: white; border: none; border-radius: 10px; cursor: pointer; }
+        button:active { background: #666; }
         .vazio { visibility: hidden; }
+        #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <h2>Mini RPG HTML</h2>
-    <canvas id="jogoCanvas" width="400" height="400"></canvas>
+<div id="info">Posição: <span id="pos">0, 0</span></div>
+<canvas id="gameCanvas"></canvas>
 
-    <div class="controles">
-        <div class="vazio"></div>
-        <button onclick="mover('cima')">↑</button>
-        <div class="vazio"></div>
-        <button onclick="mover('esquerda')">←</button>
-        <button onclick="mover('baixo')">↓</button>
-        <button onclick="mover('direita')">→</button>
-    </div>
+<div class="controles">
+    <div class="vazio"></div>
+    <button onmousedown="iniciarMov('cima')" onmouseup="pararMov()" ontouchstart="iniciarMov('cima')" ontouchend="pararMov()">↑</button>
+    <div class="vazio"></div>
+    <button onmousedown="iniciarMov('esquerda')" onmouseup="pararMov()" ontouchstart="iniciarMov('esquerda')" ontouchend="pararMov()">←</button>
+    <button onmousedown="iniciarMov('baixo')" onmouseup="pararMov()" ontouchstart="iniciarMov('baixo')" ontouchend="pararMov()">↓</button>
+    <button onmousedown="iniciarMov('direita')" onmouseup="pararMov()" ontouchstart="iniciarMov('direita')" ontouchend="pararMov()">→</button>
+</div>
 
-    <script>
-        const canvas = document.getElementById("jogoCanvas");
-        const ctx = canvas.getContext("2d");
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const posDisplay = document.getElementById("pos");
 
-        // Configurações do Personagem
-        let player = {
-            x: 180,
-            y: 180,
-            tamanho: 40,
-            cor: "#00ff00",
-            velocidade: 20
-        };
+    // Ajusta o canvas para o tamanho da tela
+    canvas.width = window.innerWidth * 0.9;
+    canvas.height = window.innerHeight * 0.5;
 
-        function desenhar() {
-            // Limpa a tela
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Desenha o "boneco" (um quadrado por enquanto)
-            ctx.fillStyle = player.cor;
-            ctx.fillRect(player.x, player.y, player.tamanho, player.tamanho);
+    // Configurações do Mundo
+    const TAM_TILE = 50; // Tamanho de cada quadrado do chão
+    const MUNDO_LARGURA = 2000; // 2000px de largura
+    const MUNDO_ALTURA = 2000;  // 2000px de altura
+
+    // Jogador
+    let player = {
+        x: MUNDO_LARGURA / 2,
+        y: MUNDO_ALTURA / 2,
+        size: 30,
+        speed: 5,
+        color: "#00ffcc"
+    };
+
+    // Estado do movimento
+    let movendo = null;
+
+    function iniciarMov(dir) { movendo = dir; }
+    function pararMov() { movendo = null; }
+
+    function atualizar() {
+        if (movendo === 'cima' && player.y > 0) player.y -= player.speed;
+        if (movendo === 'baixo' && player.y < MUNDO_ALTURA - player.size) player.y += player.speed;
+        if (movendo === 'esquerda' && player.x > 0) player.x -= player.speed;
+        if (movendo === 'direita' && player.x < MUNDO_LARGURA - player.size) player.x += player.speed;
+
+        posDisplay.innerText = `${Math.floor(player.x)}, ${Math.floor(player.y)}`;
+    }
+
+    function desenhar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // --- SISTEMA DE CÂMERA ---
+        // Calcula o deslocamento para manter o player no centro
+        let camX = -player.x + canvas.width / 2;
+        let camY = -player.y + canvas.height / 2;
+
+        ctx.save();
+        ctx.translate(camX, camY);
+
+        // Desenha o CHÃO (Grid de Mundo Aberto)
+        ctx.strokeStyle = "#333";
+        for (let x = 0; x < MUNDO_LARGURA; x += TAM_TILE) {
+            for (let y = 0; y < MUNDO_ALTURA; y += TAM_TILE) {
+                ctx.strokeRect(x, y, TAM_TILE, TAM_TILE);
+            }
         }
 
-        function mover(direcao) {
-            if (direcao === 'cima' && player.y > 0) player.y -= player.velocidade;
-            if (direcao === 'baixo' && player.y < canvas.height - player.tamanho) player.y += player.velocidade;
-            if (direcao === 'esquerda' && player.x > 0) player.x -= player.velocidade;
-            if (direcao === 'direita' && player.x < canvas.width - player.tamanho) player.x += player.velocidade;
-            
+        // Desenha Objetos (Ex: Árvores ou Pedras fixas)
+        ctx.fillStyle = "brown";
+        ctx.fillRect(500, 500, 50, 50); 
+        ctx.fillRect(1200, 800, 50, 50);
+
+        // Desenha o Jogador
+        ctx.fillStyle = player.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = player.color;
+        ctx.fillRect(player.x, player.y, player.size, player.size);
+        
+        ctx.restore();
+
+        requestAnimationFrame(() => {
+            atualizar();
             desenhar();
-        }
+        });
+    }
 
-        // Desenho inicial
-        desenhar();
-    </script>
+    desenhar();
+</script>
 </body>
 </html>
