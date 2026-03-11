@@ -3,145 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brawl Box Simulator Pro</title>
+    <title>Best Box Simulator</title>
     <style>
-        body { 
-            margin: 0; 
-            background: radial-gradient(circle, #1a2a6c, #2a0845); 
-            color: white; 
-            font-family: 'Arial Black', sans-serif; 
-            text-align: center; 
-            height: 100vh; 
+        :root {
+            --azul-brawl: #1e90ff;
+            --amarelo-brawl: #f1c40f;
+            --roxo-brawl: #8e44ad;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: url('https://images.wallpapersden.com/image/download/brawl-stars-game-art_a2tpaGWUmZqaraWkpJRmbmdlrWZlbWU.jpg');
+            background-size: cover;
+            background-position: center;
+            font-family: 'Arial Black', sans-serif;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* BARRA SUPERIOR (Recursos) */
+        .top-bar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .resource {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 2px solid #555;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        /* MENU LATERAL (Esquerda) */
+        .side-menu {
+            width: 80px;
+            background: rgba(0, 0, 0, 0.6);
             display: flex;
             flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            gap: 15px;
+            border-right: 3px solid var(--amarelo-brawl);
         }
-        
-        .header { padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 3px solid #f1c40f; }
-        
-        .stats-container { display: flex; justify-content: center; gap: 20px; font-size: 18px; }
-        .stat-item { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid gold; }
 
-        #game-area { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-
-        #caixa-click { 
-            width: 220px; 
-            cursor: pointer; 
-            transition: transform 0.1s, filter 0.3s;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));
+        .menu-item {
+            width: 60px;
+            height: 60px;
+            background: var(--azul-brawl);
+            border-radius: 10px;
+            border: 3px solid white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            text-align: center;
         }
-        #caixa-click:active { transform: scale(0.85); }
-        #caixa-click:hover { filter: drop-shadow(0 0 25px gold); }
 
-        /* Card do Brawler que aparece */
-        #resultado { margin-top: 20px; min-height: 250px; display: flex; justify-content: center; align-items: center; }
-        
-        .brawler-card { 
-            background: linear-gradient(135deg, #2c3e50, #000);
-            padding: 20px; 
-            border-radius: 20px; 
-            border: 5px solid #fff;
-            width: 180px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            animation: surgir 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* ÁREA PRINCIPAL */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
-        
-        .brawler-card img { width: 140px; height: 140px; object-fit: contain; }
-        .brawler-card h3 { margin: 10px 0 5px 0; text-transform: uppercase; }
-        
-        /* Cores de Raridade */
-        .raro { border-color: #3498db; box-shadow: 0 0 20px #3498db; }
-        .epico { border-color: #9b59b6; box-shadow: 0 0 20px #9b59b6; }
-        .lendario { border-color: #f1c40f; box-shadow: 0 0 25px #f1c40f; }
 
-        @keyframes surgir { from { transform: scale(0) rotate(-10deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
-        
-        .tap-hint { margin-top: 10px; color: gold; animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .brawler-display {
+            width: 300px;
+            filter: drop-shadow(0 0 20px gold);
+            transition: transform 0.3s;
+        }
+
+        .box-button {
+            position: absolute;
+            bottom: 40px;
+            background: #ff4757;
+            padding: 15px 40px;
+            border-radius: 15px;
+            border: 4px solid white;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #c0392b;
+        }
+
+        .box-button:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        /* Janela de Resultado */
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #brawler-ganho img { width: 250px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="stats-container">
-            <div class="stat-item">💰 <span id="moedas">0</span></div>
-            <div class="stat-item">🏆 <span id="total-brawlers">0/9</span></div>
-        </div>
+    <div class="side-menu">
+        <div class="menu-item" style="background: #2ed573;">SHOP</div>
+        <div class="menu-item">BRAWLERS</div>
+        <div class="menu-item" style="background: #ffa502;">PRIZES</div>
     </div>
 
-    <div id="game-area">
-        <div id="resultado">
-            <div style="text-align: center;">
-                <img id="caixa-click" onclick="abrirCaixa()" src="https://vignette.wikia.nocookie.net/brawlstars/images/0/0c/Brawl_Box.png/revision/latest?cb=20181213144828" alt="Caixa">
-                <p class="tap-hint">CLIQUE PARA ABRIR!</p>
-            </div>
-        </div>
+    <div class="top-bar">
+        <div class="resource">🟢 <span id="gems">999</span></div>
+        <div class="resource">⭐ <span id="star">99</span></div>
+        <div class="resource" style="border-color: gold;">🟡 <span id="coins">5423</span></div>
+    </div>
+
+    <div class="main-content">
+        <img id="current-brawler" class="brawler-display" src="https://vignette.wikia.nocookie.net/brawlstars/images/e/e4/Leon_Portrait.png" alt="Brawler">
+        
+        <button class="box-button" onclick="abrirCaixa()">ABRIR CAIXA</button>
+    </div>
+
+    <div id="overlay" onclick="fecharCard()">
+        <h1 id="raridade-texto">LENDÁRIO!</h1>
+        <div id="brawler-ganho"></div>
+        <p>Clique para continuar</p>
     </div>
 
     <script>
-        let moedas = 0;
-        let colecao = [];
-
-        // Banco de Dados com Imagens Reais
         const brawlers = [
-            // RAROS
-            { nome: "Shelly", raridade: "raro", img: "https://vignette.wikia.nocookie.net/brawlstars/images/7/7b/Shelly_Portrait.png" },
-            { nome: "Colt", raridade: "raro", img: "https://vignette.wikia.nocookie.net/brawlstars/images/0/00/Colt_Portrait.png" },
-            { nome: "El Primo", raridade: "raro", img: "https://vignette.wikia.nocookie.net/brawlstars/images/5/53/El_Primo_Portrait.png" },
-            // ÉPICOS
-            { nome: "Piper", raridade: "epico", img: "https://vignette.wikia.nocookie.net/brawlstars/images/d/df/Piper_Portrait.png" },
-            { nome: "Bibi", raridade: "epico", img: "https://vignette.wikia.nocookie.net/brawlstars/images/9/96/Bibi_Portrait.png" },
-            { nome: "Frank", raridade: "epico", img: "https://vignette.wikia.nocookie.net/brawlstars/images/3/30/Frank_Portrait.png" },
-            // LENDÁRIOS
-            { nome: "Leon", raridade: "lendario", img: "https://vignette.wikia.nocookie.net/brawlstars/images/e/e4/Leon_Portrait.png" },
-            { nome: "Crow", raridade: "lendario", img: "https://vignette.wikia.nocookie.net/brawlstars/images/4/42/Crow_Portrait.png" },
-            { nome: "Spike", raridade: "lendario", img: "https://vignette.wikia.nocookie.net/brawlstars/images/1/19/Spike_Portrait.png" }
+            { nome: "Crow", img: "https://vignette.wikia.nocookie.net/brawlstars/images/4/42/Crow_Portrait.png", raridade: "LENDÁRIO", cor: "gold" },
+            { nome: "Spike", img: "https://vignette.wikia.nocookie.net/brawlstars/images/1/19/Spike_Portrait.png", raridade: "LENDÁRIO", cor: "gold" },
+            { nome: "Mortis", img: "https://vignette.wikia.nocookie.net/brawlstars/images/0/0e/Mortis_Portrait.png", raridade: "MÍTICO", cor: "red" }
         ];
 
         function abrirCaixa() {
-            const resArea = document.getElementById("resultado");
-            let sorte = Math.random() * 100;
-            let bSorteado;
+            const sorteado = brawlers[Math.floor(Math.random() * brawlers.length)];
+            const overlay = document.getElementById("overlay");
+            const bDiv = document.getElementById("brawler-ganho");
+            const rTxt = document.getElementById("raridade-texto");
 
-            // Sistema de Probabilidade
-            if (sorte > 96) bSorteado = sortearPorRaridade("lendario");
-            else if (sorte > 80) bSorteado = sortearPorRaridade("epico");
-            else bSorteado = sortearPorRaridade("raro");
-
-            // Atualiza Moedas
-            moedas += Math.floor(Math.random() * 80) + 20;
-            document.getElementById("moedas").innerText = moedas;
-
-            // Gera o Card do Brawler
-            resArea.innerHTML = `
-                <div style="text-align:center">
-                    <div class="brawler-card ${bSorteado.raridade}">
-                        <img src="${bSorteado.img}" alt="${bSorteado.nome}">
-                        <h3>${bSorteado.nome}</h3>
-                        <small style="color: #ccc">${bSorteado.raridade.toUpperCase()}</small>
-                    </div>
-                    <button onclick="voltarParaCaixa()" style="margin-top:20px; padding:10px 20px; border-radius:10px; border:none; cursor:pointer; font-weight:bold; background:#f1c40f">CONTINUAR</button>
-                </div>
-            `;
-
-            // Contabiliza na Coleção
-            if (!colecao.includes(bSorteado.nome)) {
-                colecao.push(bSorteado.nome);
-                document.getElementById("total-brawlers").innerText = colecao.length + "/9";
-            }
+            rTxt.innerText = sorteado.raridade + "!";
+            rTxt.style.color = sorteado.cor;
+            bDiv.innerHTML = `<img src="${sorteado.img}"><h2>${sorteado.nome}</h2>`;
+            
+            overlay.style.display = "flex";
         }
 
-        function sortearPorRaridade(r) {
-            const lista = brawlers.filter(b => b.raridade === r);
-            return lista[Math.floor(Math.random() * lista.length)];
-        }
-
-        function voltarParaCaixa() {
-            document.getElementById("resultado").innerHTML = `
-                <div style="text-align: center;">
-                    <img id="caixa-click" onclick="abrirCaixa()" src="https://vignette.wikia.nocookie.net/brawlstars/images/0/0c/Brawl_Box.png/revision/latest?cb=20181213144828" alt="Caixa">
-                    <p class="tap-hint">CLIQUE PARA ABRIR!</p>
-                </div>
-            `;
+        function fecharCard() {
+            document.getElementById("overlay").style.display = "none";
         }
     </script>
 </body>
