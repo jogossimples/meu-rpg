@@ -2,121 +2,106 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Brawl Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Box Simulator</title>
     <style>
-        body { margin: 0; background: #0a0a0a; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
-        canvas { border: 3px solid #f1c40f; background: #2ecc71; touch-action: none; margin-top: 10px; border-radius: 15px; }
-        .ui-container { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-around; pointer-events: none; }
-        .btn-game { width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.3); pointer-events: auto; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .move-btn { background: rgba(52, 152, 219, 0.7); } /* Azul para andar */
-        .attack-btn { background: rgba(231, 76, 60, 0.7); } /* Vermelho para atacar */
-        #status { position: absolute; top: 10px; font-size: 18px; text-shadow: 2px 2px #000; }
+        body { margin: 0; background: #1a2a6c; background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d); 
+               color: white; font-family: 'Arial Black', sans-serif; text-align: center; height: 100vh; overflow: hidden; }
+        
+        .header { padding: 20px; text-shadow: 2px 2px #000; }
+        
+        #caixa-container { margin: 50px auto; cursor: pointer; transition: transform 0.2s; }
+        #caixa-container:active { transform: scale(0.9); }
+        #caixa-img { width: 200px; filter: drop-shadow(0 0 10px gold); }
+
+        #resultado { font-size: 24px; margin-top: 20px; min-height: 50px; }
+        
+        .stats { display: flex; justify-content: space-around; background: rgba(0,0,0,0.5); padding: 10px; }
+
+        /* Estilo do Brawler Ganho */
+        .brawler-card { display: inline-block; padding: 15px; border-radius: 10px; border: 4px solid #fff; 
+                        margin-top: 20px; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+        
+        .raro { background: #3498db; }    /* Raro - Azul */
+        .epico { background: #9b59b6; }   /* Épico - Roxo */
+        .lendario { background: #f1c40f; color: #000; } /* Lendário - Amarelo */
     </style>
 </head>
 <body>
 
-<div id="status">Brawlers Restantes: 10</div>
-<canvas id="brawlCanvas"></canvas>
+    <div class="header">
+        <h1>BRAWL SIMULATOR</h1>
+        <div class="stats">
+            <div>Moedas: <span id="moedas">0</span></div>
+            <div>Brawlers: <span id="total-brawlers">0/10</span></div>
+        </div>
+    </div>
 
-<div class="ui-container">
-    <div class="btn-game move-btn" id="btnMove">ANDAR</div>
-    <div class="btn-game attack-btn" id="btnAttack">TIRO</div>
-</div>
+    <div id="caixa-container" onclick="abrirCaixa()">
+        <img id="caixa-img" src="https://cdn-icons-png.flaticon.com/512/3555/3555891.png" alt="Caixa">
+        <p>CLIQUE NA CAIXA!</p>
+    </div>
 
-<script>
-    const canvas = document.getElementById("brawlCanvas");
-    const ctx = canvas.getContext("2d");
+    <div id="resultado"></div>
 
-    canvas.width = window.innerWidth * 0.95;
-    canvas.height = window.innerHeight * 0.6;
+    <script>
+        let moedas = 0;
+        let brawlersGanhou = [];
 
-    let brawler = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        r: 20,
-        color: "#3498db",
-        speed: 4,
-        dir: "direita"
-    };
+        // Lista de Brawlers (Nome e Raridade)
+        const listaBrawlers = [
+            { nome: "Shelly", raridade: "raro" },
+            { nome: "Colt", raridade: "raro" },
+            { nome: "El Primo", raridade: "raro" },
+            { nome: "Poco", raridade: "raro" },
+            { nome: "Piper", raridade: "epico" },
+            { nome: "Frank", raridade: "epico" },
+            { nome: "Bibi", raridade: "epico" },
+            { nome: "Leon", raridade: "lendario" },
+            { nome: "Crow", raridade: "lendario" },
+            { nome: "Spike", raridade: "lendario" }
+        ];
 
-    let tiros = [];
-    let estaAndando = false;
+        function abrirCaixa() {
+            const resDiv = document.getElementById("resultado");
+            
+            // Sorteia um número de 0 a 100
+            let sorte = Math.random() * 100;
+            let brawlerSorteado = null;
 
-    // --- CONTROLES ---
-    const btnMove = document.getElementById("btnMove");
-    const btnAttack = document.getElementById("btnAttack");
+            // Lógica de Probabilidade
+            if (sorte > 95) { // 5% de chance
+                brawlerSorteado = sortearDaLista("lendario");
+            } else if (sorte > 80) { // 15% de chance
+                brawlerSorteado = sortearDaLista("epico");
+            } else {
+                brawlerSorteado = sortearDaLista("raro");
+            }
 
-    // Movimentação (Simplificada para o exemplo)
-    btnMove.ontouchstart = () => estaAndando = true;
-    btnMove.ontouchend = () => estaAndando = false;
-    btnMove.onmousedown = () => estaAndando = true;
-    btnMove.onmouseup = () => estaAndando = false;
+            // Ganhar moedas sempre
+            moedas += Math.floor(Math.random() * 50) + 10;
+            document.getElementById("moedas").innerText = moedas;
 
-    // Ataque
-    function atirar() {
-        tiros.push({
-            x: brawler.x,
-            y: brawler.y,
-            vx: brawler.dir === "direita" ? 8 : (brawler.dir === "esquerda" ? -8 : 0),
-            vy: brawler.dir === "baixo" ? 8 : (brawler.dir === "cima" ? -8 : 0),
-            vida: 40 // tempo que o tiro dura
-        });
-    }
-    btnAttack.onclick = atirar;
+            // Exibir na tela
+            resDiv.innerHTML = `
+                <div class="brawler-card ${brawlerSorteado.raridade}">
+                    <small>${brawlerSorteado.raridade.toUpperCase()}</small><br>
+                    <strong>${brawlerSorteado.nome}</strong>
+                </div>
+            `;
 
-    // Detectar direção pelo clique no botão de andar (ou use setas do teclado)
-    window.addEventListener("keydown", (e) => {
-        if(e.key === "ArrowRight") brawler.dir = "direita";
-        if(e.key === "ArrowLeft") brawler.dir = "esquerda";
-        if(e.key === "ArrowUp") brawler.dir = "cima";
-        if(e.key === "ArrowDown") brawler.dir = "baixo";
-        estaAndando = true;
-    });
-    window.addEventListener("keyup", () => estaAndando = false);
-
-    function loop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Movimentação
-        if (estaAndando) {
-            if (brawler.dir === "direita") brawler.x += brawler.speed;
-            if (brawler.dir === "esquerda") brawler.x -= brawler.speed;
-            if (brawler.dir === "cima") brawler.y -= brawler.speed;
-            if (brawler.dir === "baixo") brawler.y += brawler.speed;
+            // Adicionar à coleção se for novo
+            if (!brawlersGanhou.includes(brawlerSorteado.nome)) {
+                brawlersGanhou.push(brawlerSorteado.nome);
+                document.getElementById("total-brawlers").innerText = brawlersGanhou.length + "/10";
+            }
         }
 
-        // Desenhar Tiros
-        tiros.forEach((t, i) => {
-            t.x += t.vx;
-            t.y += t.vy;
-            t.vida--;
-            ctx.fillStyle = "yellow";
-            ctx.beginPath();
-            ctx.arc(t.x, t.y, 5, 0, Math.PI*2);
-            ctx.fill();
-            if(t.vida <= 0) tiros.splice(i, 1);
-        });
-
-        // Desenhar Brawler (Círculo com "frente")
-        ctx.fillStyle = brawler.color;
-        ctx.beginPath();
-        ctx.arc(brawler.x, brawler.y, brawler.r, 0, Math.PI*2);
-        ctx.fill();
-        
-        // Indicador de mira
-        ctx.strokeStyle = "white";
-        ctx.beginPath();
-        ctx.moveTo(brawler.x, brawler.y);
-        let miraX = brawler.x + (brawler.dir === "direita" ? 30 : brawler.dir === "esquerda" ? -30 : 0);
-        let miraY = brawler.y + (brawler.dir === "baixo" ? 30 : brawler.dir === "cima" ? -30 : 0);
-        ctx.lineTo(miraX, miraY);
-        ctx.stroke();
-
-        requestAnimationFrame(loop);
-    }
-
-    loop();
-</script>
+        function sortearDaLista(raridade) {
+            const filtrados = listaBrawlers.filter(b => b.raridade === raridade);
+            return filtrados[Math.floor(Math.random() * filtrados.length)];
+        }
+    </script>
 </body>
 </html>
