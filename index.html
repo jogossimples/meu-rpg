@@ -3,108 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Mundo Aberto</title>
+    <title>Brawl Simulator</title>
     <style>
-        body { margin: 0; background: #111; color: white; font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
-        canvas { border: 2px solid #555; background: #222; touch-action: none; }
-        .controles { display: grid; grid-template-columns: repeat(3, 70px); gap: 5px; margin-top: 10px; }
-        button { width: 70px; height: 70px; font-size: 24px; background: #444; color: white; border: none; border-radius: 10px; cursor: pointer; }
-        button:active { background: #666; }
-        .vazio { visibility: hidden; }
-        #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; pointer-events: none; }
+        body { margin: 0; background: #0a0a0a; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        canvas { border: 3px solid #f1c40f; background: #2ecc71; touch-action: none; margin-top: 10px; border-radius: 15px; }
+        .ui-container { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-around; pointer-events: none; }
+        .btn-game { width: 80px; height: 80px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.3); pointer-events: auto; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .move-btn { background: rgba(52, 152, 219, 0.7); } /* Azul para andar */
+        .attack-btn { background: rgba(231, 76, 60, 0.7); } /* Vermelho para atacar */
+        #status { position: absolute; top: 10px; font-size: 18px; text-shadow: 2px 2px #000; }
     </style>
 </head>
 <body>
 
-<div id="info">Posição: <span id="pos">0, 0</span></div>
-<canvas id="gameCanvas"></canvas>
+<div id="status">Brawlers Restantes: 10</div>
+<canvas id="brawlCanvas"></canvas>
 
-<div class="controles">
-    <div class="vazio"></div>
-    <button onmousedown="iniciarMov('cima')" onmouseup="pararMov()" ontouchstart="iniciarMov('cima')" ontouchend="pararMov()">↑</button>
-    <div class="vazio"></div>
-    <button onmousedown="iniciarMov('esquerda')" onmouseup="pararMov()" ontouchstart="iniciarMov('esquerda')" ontouchend="pararMov()">←</button>
-    <button onmousedown="iniciarMov('baixo')" onmouseup="pararMov()" ontouchstart="iniciarMov('baixo')" ontouchend="pararMov()">↓</button>
-    <button onmousedown="iniciarMov('direita')" onmouseup="pararMov()" ontouchstart="iniciarMov('direita')" ontouchend="pararMov()">→</button>
+<div class="ui-container">
+    <div class="btn-game move-btn" id="btnMove">ANDAR</div>
+    <div class="btn-game attack-btn" id="btnAttack">TIRO</div>
 </div>
 
 <script>
-    const canvas = document.getElementById("gameCanvas");
+    const canvas = document.getElementById("brawlCanvas");
     const ctx = canvas.getContext("2d");
-    const posDisplay = document.getElementById("pos");
 
-    // Ajusta o canvas para o tamanho da tela
-    canvas.width = window.innerWidth * 0.9;
-    canvas.height = window.innerHeight * 0.5;
+    canvas.width = window.innerWidth * 0.95;
+    canvas.height = window.innerHeight * 0.6;
 
-    // Configurações do Mundo
-    const TAM_TILE = 50; // Tamanho de cada quadrado do chão
-    const MUNDO_LARGURA = 2000; // 2000px de largura
-    const MUNDO_ALTURA = 2000;  // 2000px de altura
-
-    // Jogador
-    let player = {
-        x: MUNDO_LARGURA / 2,
-        y: MUNDO_ALTURA / 2,
-        size: 30,
-        speed: 5,
-        color: "#00ffcc"
+    let brawler = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        r: 20,
+        color: "#3498db",
+        speed: 4,
+        dir: "direita"
     };
 
-    // Estado do movimento
-    let movendo = null;
+    let tiros = [];
+    let estaAndando = false;
 
-    function iniciarMov(dir) { movendo = dir; }
-    function pararMov() { movendo = null; }
+    // --- CONTROLES ---
+    const btnMove = document.getElementById("btnMove");
+    const btnAttack = document.getElementById("btnAttack");
 
-    function atualizar() {
-        if (movendo === 'cima' && player.y > 0) player.y -= player.speed;
-        if (movendo === 'baixo' && player.y < MUNDO_ALTURA - player.size) player.y += player.speed;
-        if (movendo === 'esquerda' && player.x > 0) player.x -= player.speed;
-        if (movendo === 'direita' && player.x < MUNDO_LARGURA - player.size) player.x += player.speed;
+    // Movimentação (Simplificada para o exemplo)
+    btnMove.ontouchstart = () => estaAndando = true;
+    btnMove.ontouchend = () => estaAndando = false;
+    btnMove.onmousedown = () => estaAndando = true;
+    btnMove.onmouseup = () => estaAndando = false;
 
-        posDisplay.innerText = `${Math.floor(player.x)}, ${Math.floor(player.y)}`;
-    }
-
-    function desenhar() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // --- SISTEMA DE CÂMERA ---
-        // Calcula o deslocamento para manter o player no centro
-        let camX = -player.x + canvas.width / 2;
-        let camY = -player.y + canvas.height / 2;
-
-        ctx.save();
-        ctx.translate(camX, camY);
-
-        // Desenha o CHÃO (Grid de Mundo Aberto)
-        ctx.strokeStyle = "#333";
-        for (let x = 0; x < MUNDO_LARGURA; x += TAM_TILE) {
-            for (let y = 0; y < MUNDO_ALTURA; y += TAM_TILE) {
-                ctx.strokeRect(x, y, TAM_TILE, TAM_TILE);
-            }
-        }
-
-        // Desenha Objetos (Ex: Árvores ou Pedras fixas)
-        ctx.fillStyle = "brown";
-        ctx.fillRect(500, 500, 50, 50); 
-        ctx.fillRect(1200, 800, 50, 50);
-
-        // Desenha o Jogador
-        ctx.fillStyle = player.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = player.color;
-        ctx.fillRect(player.x, player.y, player.size, player.size);
-        
-        ctx.restore();
-
-        requestAnimationFrame(() => {
-            atualizar();
-            desenhar();
+    // Ataque
+    function atirar() {
+        tiros.push({
+            x: brawler.x,
+            y: brawler.y,
+            vx: brawler.dir === "direita" ? 8 : (brawler.dir === "esquerda" ? -8 : 0),
+            vy: brawler.dir === "baixo" ? 8 : (brawler.dir === "cima" ? -8 : 0),
+            vida: 40 // tempo que o tiro dura
         });
     }
+    btnAttack.onclick = atirar;
 
-    desenhar();
+    // Detectar direção pelo clique no botão de andar (ou use setas do teclado)
+    window.addEventListener("keydown", (e) => {
+        if(e.key === "ArrowRight") brawler.dir = "direita";
+        if(e.key === "ArrowLeft") brawler.dir = "esquerda";
+        if(e.key === "ArrowUp") brawler.dir = "cima";
+        if(e.key === "ArrowDown") brawler.dir = "baixo";
+        estaAndando = true;
+    });
+    window.addEventListener("keyup", () => estaAndando = false);
+
+    function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Movimentação
+        if (estaAndando) {
+            if (brawler.dir === "direita") brawler.x += brawler.speed;
+            if (brawler.dir === "esquerda") brawler.x -= brawler.speed;
+            if (brawler.dir === "cima") brawler.y -= brawler.speed;
+            if (brawler.dir === "baixo") brawler.y += brawler.speed;
+        }
+
+        // Desenhar Tiros
+        tiros.forEach((t, i) => {
+            t.x += t.vx;
+            t.y += t.vy;
+            t.vida--;
+            ctx.fillStyle = "yellow";
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 5, 0, Math.PI*2);
+            ctx.fill();
+            if(t.vida <= 0) tiros.splice(i, 1);
+        });
+
+        // Desenhar Brawler (Círculo com "frente")
+        ctx.fillStyle = brawler.color;
+        ctx.beginPath();
+        ctx.arc(brawler.x, brawler.y, brawler.r, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Indicador de mira
+        ctx.strokeStyle = "white";
+        ctx.beginPath();
+        ctx.moveTo(brawler.x, brawler.y);
+        let miraX = brawler.x + (brawler.dir === "direita" ? 30 : brawler.dir === "esquerda" ? -30 : 0);
+        let miraY = brawler.y + (brawler.dir === "baixo" ? 30 : brawler.dir === "cima" ? -30 : 0);
+        ctx.lineTo(miraX, miraY);
+        ctx.stroke();
+
+        requestAnimationFrame(loop);
+    }
+
+    loop();
 </script>
 </body>
 </html>
