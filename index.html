@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu RPG Simples</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; background: #222; color: white; font-family: sans-serif; }
+        canvas { border: 4px solid #fff; background: #444; margin-bottom: 20px; }
+        .controles { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; }
+        button { width: 60px; height: 60px; font-weight: bold; cursor: pointer; }
+        .vazio { visibility: hidden; }
+    </style>
+</head>
+<body>
+
+    <h2>Mini RPG HTML</h2>
+    <canvas id="jogoCanvas" width="400" height="400"></canvas>
+
+    <div class="controles">
+        <div class="vazio"></div>
+        <button onclick="mover('cima')">↑</button>
+        <div class="vazio"></div>
+        <button onclick="mover('esquerda')">←</button>
+        <button onclick="mover('baixo')">↓</button>
+        <button onclick="mover('direita')">→</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("jogoCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Configurações do Personagem
+        let player = {
+            x: 180,
+            y: 180,
+            tamanho: 40,
+            cor: "#00ff00",
+            velocidade: 20
+        };
+
+        function desenhar() {
+            // Limpa a tela
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenha o "boneco" (um quadrado por enquanto)
+            ctx.fillStyle = player.cor;
+            ctx.fillRect(player.x, player.y, player.tamanho, player.tamanho);
+        }
+
+        function mover(direcao) {
+            if (direcao === 'cima' && player.y > 0) player.y -= player.velocidade;
+            if (direcao === 'baixo' && player.y < canvas.height - player.tamanho) player.y += player.velocidade;
+            if (direcao === 'esquerda' && player.x > 0) player.x -= player.velocidade;
+            if (direcao === 'direita' && player.x < canvas.width - player.tamanho) player.x += player.velocidade;
+            
+            desenhar();
+        }
+
+        // Desenho inicial
+        desenhar();
+    </script>
+</body>
+</html>
